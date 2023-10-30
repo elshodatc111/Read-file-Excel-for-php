@@ -486,6 +486,49 @@
                     echo $i." tech tolov qo'shildi";
                 }
             ?>
+            <td>
+                <h4>Qaytarilgan to'lov</h4>
+                <form class="" action="index2.php" method="post" enctype="multipart/form-data">
+                    <input type="file" name="excel" required value="">
+                    <button type="submit" name="tulov_qaytar">Import</button>
+                </form>
+            </td>
+            <?php
+                if(isset($_POST['tulov_qaytar'])){
+                    $fileName = $_FILES["excel"]["name"];
+                    $fileExtension = explode('.', $fileName);
+                    $fileExtension = strtolower(end($fileExtension));
+                    $newFileName = date("Y.m.d") . " - " . date("h.i.sa") . "." . $fileExtension;
+                    $targetDirectory = "uploads/" . $newFileName;
+                    move_uploaded_file($_FILES['excel']['tmp_name'], $targetDirectory);
+                    error_reporting(0);
+                    ini_set('display_errors', 0);
+                    require 'excelReader/excel_reader2.php';
+                    require 'excelReader/SpreadsheetReader.php';
+                    $reader = new SpreadsheetReader($targetDirectory);
+                    $i=1;
+                    include("../newcrm/config/config.php");
+                    foreach($reader as $key => $row){
+                        $ID = $row[0];
+                        $UserID = $row[1];
+                        $Summa = $row[2];
+                        $TulovType = $row[3];
+                        $Qaytarildi = $row[4];
+                        $Operator = $row[5];
+                        $Izoh = $row[6];
+                        $Xisobchi = $row[7];
+                        $Tasdiqlandi = $row[8];
+                        if($i>1){
+                            $sql = "INSERT INTO `moliya_qaytarildi`(`id`, `UserID`, `TulovSumma`, `TulovTuri`, `QaytarishVaqti`, `Meneger`, `Izoh`, `Xisobchi`, `Tasdiqlandi`, `Status`)
+                            VALUES (NULL,?,?,?,?,?,?,?,?,'true')";
+                            $stmt= $conn->prepare($sql);
+                            $stmt->execute([ $UserID, $Summa, $TulovType, $Qaytarildi, $Operator, $Izoh, $Xisobchi, $Tasdiqlandi]);
+                        }
+                        $i++;
+                    }
+                    echo $i." Qaytarilgan tolovlar";
+                }
+            ?>
         </tr>
     </table>
 </body>
